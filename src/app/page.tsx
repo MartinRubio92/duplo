@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllProyectos } from '@/lib/projectos';
+import { getAllProyectos } from '@/lib/proyectos';
 
 export default function Home() {
   const proyectos = getAllProyectos();

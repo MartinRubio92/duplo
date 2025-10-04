@@ -19,10 +19,16 @@ export interface Proyecto {
 
 export function getProyectoSlugs() {
   if (!fs.existsSync(proyectosDirectory)) {
+    console.warn(`Warning: Directory ${proyectosDirectory} does not exist`);
     return [];
   }
-  return fs.readdirSync(proyectosDirectory)
-    .filter(file => file.endsWith('.md'));
+  try {
+    return fs.readdirSync(proyectosDirectory)
+      .filter(file => file.endsWith('.md'));
+  } catch (error) {
+    console.error(`Error reading directory ${proyectosDirectory}:`, error);
+    return [];
+  }
 }
 
 export function getProyectoBySlug(slug: string): Proyecto {
@@ -33,31 +39,54 @@ export function getProyectoBySlug(slug: string): Proyecto {
     throw new Error(`Proyecto no encontrado: ${slug}`);
   }
   
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
-  const { data, content } = matter(fileContents);
+  try {
+    const fileContents = fs.readFileSync(fullPath, 'utf8');
+    const { data, content } = matter(fileContents);
 
-  // Convertir markdown a HTML
-  const processedContent = remark()
-    .use(html)
-    .processSync(content);
-  const contentHtml = processedContent.toString();
+    // Validar campos requeridos
+    if (!data.titulo || !data.descripcion || !data.fecha || !data.tipo) {
+      throw new Error(`Proyecto ${realSlug} tiene campos requeridos faltantes`);
+    }
 
-  return {
-    slug: realSlug,
-    titulo: data.titulo,
-    descripcion: data.descripcion,
-    fecha: data.fecha,
-    tipo: data.tipo,
-    imagenes: data.imagenes || [],
-    videoUrl: data.videoUrl,
-    content: contentHtml,
-  };
+    // Convertir markdown a HTML
+    const processedContent = remark()
+      .use(html)
+      .processSync(content);
+    const contentHtml = processedContent.toString();
+
+    return {
+      slug: realSlug,
+      titulo: data.titulo,
+      descripcion: data.descripcion,
+      fecha: data.fecha,
+      tipo: data.tipo,
+      imagenes: data.imagenes || [],
+      videoUrl: data.videoUrl,
+      content: contentHtml,
+    };
+  } catch (error) {
+    console.error(`Error reading proyecto ${realSlug}:`, error);
+    
+    if (error instanceof Error && error.message === `Proyecto ${realSlug} tiene campos requeridos faltantes`) {
+      throw error;
+    }
+    
+    throw new Error(`Error al procesar proyecto: ${realSlug}`);
+  }
 }
 
 export function getAllProyectos(): Proyecto[] {
   const slugs = getProyectoSlugs();
   const proyectos = slugs
-    .map((slug) => getProyectoBySlug(slug))
+    .map((slug) => {
+      try {
+        return getProyectoBySlug(slug);
+      } catch (error) {
+        console.error(`Skipping proyecto ${slug} due to errors:`, error);
+        return null;
+      }
+    })
+    .filter((proyecto): proyecto is Proyecto => proyecto !== null)
     .sort((a, b) => (a.fecha > b.fecha ? -1 : 1));
   return proyectos;
 }
