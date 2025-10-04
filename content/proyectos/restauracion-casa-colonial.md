@@ -1,12 +1,11 @@
 ---
+id: 1
 titulo: "Restauración Casa Colonial 1920"
 descripcion: "Restauración integral de vivienda colonial preservando elementos originales y modernizando instalaciones"
 fecha: "2024-03-15"
 tipo: "Restauración"
 imagenes:
-  - "/images/proyectos/casa-colonial/fachada.jpg"
-  - "/images/proyectos/casa-colonial/interior-1.jpg"
-  - "/images/proyectos/casa-colonial/interior-2.jpg"
+  - "/images/proyectos/casa-colonial/muñeco.png"
 videoUrl: ""
 ---
 
